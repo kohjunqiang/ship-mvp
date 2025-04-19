@@ -1,99 +1,221 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Email Intention Detection System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS application that monitors user email inboxes, detects intentions using AI (Gemini, OpenAI, Claude), matches them to predefined intentions, and executes automated actions based on the detected intentions.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Overview
 
-## Description
+This system enables businesses to automate email processing by:
+1. Connecting to user email inboxes
+2. Analyzing incoming emails with AI to detect intentions
+3. Matching detected intentions to predefined templates
+4. Extracting relevant data from emails
+5. Executing appropriate actions based on the detected intention
+6. Applying business rules for pricing and response handling
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Architecture
 
-## Project setup
+The application is structured using NestJS modules:
 
-```bash
-$ npm install
+```
+┌─────────────────┐    ┌───────────────────┐    ┌──────────────────┐
+│  Admin Module   │    │   User Module     │    │   Email Module   │
+│ - Manage        │    │ - User            │    │ - Email          │
+│   intentions    │    │   registration    │    │   processing     │
+│ - Manage        │    │ - Email           │    │ - Intention      │
+│   pricing       │    │   credentials     │    │   detection      │
+└─────────────────┘    └───────────────────┘    └──────────────────┘
+        │                       │                         │
+        └───────────────────────┼─────────────────────────┘
+                               │
+                     ┌───────────────────┐
+                     │    AI Module      │
+                     │ - Intention       │
+                     │   detection       │
+                     │ - Provider        │
+                     │   management      │
+                     └───────────────────┘
+                               │
+                     ┌───────────────────┐
+                     │  Action Module    │
+                     │ - Execute         │
+                     │   intention       │
+                     │   actions         │
+                     └───────────────────┘
 ```
 
-## Compile and run the project
+### Core Modules
 
+- **User Module**: Manages user accounts and securely stores email credentials
+- **Admin Module**: Allows admins to define intentions and pricing tables
+- **Email Module**: Handles email fetching, processing, and scheduling
+- **AI Module**: Provides an AI-agnostic interface for intention detection (currently implements Gemini)
+- **Action Module**: Executes automated responses based on detected intentions
+
+## Data Model
+
+The system uses MongoDB with the following entity schemas:
+
+- **User**: Email credentials and processing statistics
+- **Intention**: Definitions for recognizable intentions with keywords
+- **Price**: Pricing rules associated with intentions
+- **Action**: Configurable actions (email, API call, etc.) to execute
+- **ProcessedEmail**: Records of processed emails and their status
+
+## Key Features
+
+### AI-Agnostic Design
+
+The AI module is designed to work with multiple AI providers:
+- Default implementation uses Google's Gemini AI
+- Interfaces for OpenAI and Claude (Anthropic) are included but not fully implemented
+- Configuration allows switching between providers
+
+### Email Processing Workflow
+
+1. **Email Fetching** (`EmailProcessorService.fetchNewEmails`):
+   - Runs every 5 minutes via CRON job
+   - Fetches new emails from all active users' inboxes
+   - Stores emails as unprocessed records
+
+2. **Email Processing** (`EmailProcessorService.processEmails`):
+   - Runs every 30 seconds via CRON job
+   - Processes each unprocessed email:
+     - Detects intention using AI
+     - Matches with admin-defined intentions
+     - Extracts information
+     - Determines pricing
+     - Executes actions
+
+### Action Execution
+
+The system supports multiple types of actions:
+- Send Email: Send automated responses
+- API Call: Integrate with external systems
+- Update Record: Modify database records
+- Notification: Send notifications
+- Custom: Execute custom logic
+
+Actions support variable substitution using data extracted from emails.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16+)
+- MongoDB
+- Google AI API key (for Gemini)
+
+### Installation
+
+1. Clone the repository
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone <repository-url>
+cd email-intention-detection
 ```
 
-## Run tests
-
+2. Install dependencies
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+3. Create a `.env` file in the root directory
+```
+# Server
+PORT=3000
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017/email-intention-detection
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+# AI Configuration
+AI_DEFAULT_PROVIDER=gemini
+AI_GEMINI_API_KEY=your-gemini-api-key
 
-```bash
-$ npm install -g mau
-$ mau deploy
+# Email Fetching
+EMAIL_POLLING_INTERVAL=300
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. Start the application
+```bash
+npm run start:dev
+```
 
-## Resources
+### API Endpoints
 
-Check out a few resources that may come in handy when working with NestJS:
+The application provides RESTful APIs for:
+- User management
+- Intention configuration
+- Price management
+- Action configuration
+- Email processing management
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Visit `/api` after starting the application to access the Swagger documentation.
 
-## Support
+## Implementation Details
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Email Authentication
 
-## Stay in touch
+User email credentials are securely stored with encryption:
+- Password encryption/decryption in `UserService`
+- IMAP connection handling in `EmailService`
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### AI Integration
 
-## License
+The AI module provides a unified interface:
+- Common input/output formats across providers
+- Prompt templates for intention detection
+- Structured response parsing
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Scheduled Processing
+
+Email processing is handled by scheduled tasks:
+- `@Cron` decorators for scheduled execution
+- Concurrency control to prevent overlapping jobs
+- Error handling for individual emails
+
+## Example Flow
+
+1. Admin creates an intention for "Purchase Request"
+2. Admin defines actions to execute for this intention
+3. User registers with their email credentials
+4. System monitors the user's inbox
+5. When a purchase request email arrives:
+   - AI detects the intention
+   - System extracts product, quantity, etc.
+   - System determines pricing
+   - System executes defined actions (e.g., send confirmation)
+
+## Development
+
+### Project Structure
+
+```
+src/
+├── action/         # Action execution
+├── admin/          # Intention and price management
+├── ai/             # AI provider integration
+│   └── providers/  # Implementation for different AI services
+├── email/          # Email fetching and processing
+├── schemas/        # MongoDB entity definitions
+├── user/           # User management
+└── config/         # Application configuration
+```
+
+### Testing
+
+Run unit tests:
+```bash
+npm test
+```
+
+Run end-to-end tests:
+```bash
+npm run test:e2e
+```
+
+### Future Enhancements
+
+- Full implementation of OpenAI and Claude providers
+- Enhanced security with JWT authentication
+- Admin dashboard for monitoring and configuration
+- Support for more email providers and protocols
+- Advanced intention matching algorithms
