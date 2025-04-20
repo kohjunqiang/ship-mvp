@@ -1,221 +1,176 @@
-# Email Intention Detection System
+Channel-Agnostic Intention Detection System
+Technical Overview
+The Intention Detection System is a modular, event-driven platform designed to process incoming communications across multiple channels, detect semantic intentions through AI, and execute configurable workflows based on those intentions. The system uses a graph-based workflow engine to chain actions and intentions, with Terminal Actions representing concrete integrations with external systems.
+System Architecture
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│   Channel Layer  │    │  Core Engine     │    │  Integration Layer│
+│ - Email          │    │ - Intention      │    │ - API Connectors  │
+│ - SMS            │--->│   Detection      │--->│ - Calendar        │
+│ - Voice          │    │ - Workflow       │    │ - CRM             │
+│ - Chat           │    │   Execution      │    │ - Task Management │
+└──────────────────┘    └──────────────────┘    └──────────────────┘
+Key Components
+1. Backend (NestJS)
 
-A NestJS application that monitors user email inboxes, detects intentions using AI (Gemini, OpenAI, Claude), matches them to predefined intentions, and executes automated actions based on the detected intentions.
+Channel Adapters: Modular connectors for various communication channels
 
-## Overview
+Message normalization to a standard format
+Channel-specific metadata extraction
+Bidirectional communication support
 
-This system enables businesses to automate email processing by:
-1. Connecting to user email inboxes
-2. Analyzing incoming emails with AI to detect intentions
-3. Matching detected intentions to predefined templates
-4. Extracting relevant data from emails
-5. Executing appropriate actions based on the detected intention
-6. Applying business rules for pricing and response handling
 
-## Architecture
+AI Module:
 
-The application is structured using NestJS modules:
+Provider-agnostic interface for AI services
+Implementations for Gemini, OpenAI, Claude
+Structured response parsing and validation
+Dynamic prompt templating with variable substitution
 
-```
-┌─────────────────┐    ┌───────────────────┐    ┌──────────────────┐
-│  Admin Module   │    │   User Module     │    │   Email Module   │
-│ - Manage        │    │ - User            │    │ - Email          │
-│   intentions    │    │   registration    │    │   processing     │
-│ - Manage        │    │ - Email           │    │ - Intention      │
-│   pricing       │    │   credentials     │    │   detection      │
-└─────────────────┘    └───────────────────┘    └──────────────────┘
-        │                       │                         │
-        └───────────────────────┼─────────────────────────┘
-                               │
-                     ┌───────────────────┐
-                     │    AI Module      │
-                     │ - Intention       │
-                     │   detection       │
-                     │ - Provider        │
-                     │   management      │
-                     └───────────────────┘
-                               │
-                     ┌───────────────────┐
-                     │  Action Module    │
-                     │ - Execute         │
-                     │   intention       │
-                     │   actions         │
-                     └───────────────────┘
-```
 
-### Core Modules
+Workflow Engine:
 
-- **User Module**: Manages user accounts and securely stores email credentials
-- **Admin Module**: Allows admins to define intentions and pricing tables
-- **Email Module**: Handles email fetching, processing, and scheduling
-- **AI Module**: Provides an AI-agnostic interface for intention detection (currently implements Gemini)
-- **Action Module**: Executes automated responses based on detected intentions
+Directed acyclic graph execution of intention-action chains
+Context management and data persistence between workflow steps
+Conditional path selection based on AI output
+Execution history and state tracking
 
-## Data Model
 
-The system uses MongoDB with the following entity schemas:
+Terminal Action Framework:
 
-- **User**: Email credentials and processing statistics
-- **Intention**: Definitions for recognizable intentions with keywords
-- **Price**: Pricing rules associated with intentions
-- **Action**: Configurable actions (email, API call, etc.) to execute
-- **ProcessedEmail**: Records of processed emails and their status
+Pluggable architecture for response execution
+Support for synchronous and asynchronous operations
+Retry logic and failure handling
+Result validation and post-processing
 
-## Key Features
 
-### AI-Agnostic Design
+Data Store (MongoDB):
 
-The AI module is designed to work with multiple AI providers:
-- Default implementation uses Google's Gemini AI
-- Interfaces for OpenAI and Claude (Anthropic) are included but not fully implemented
-- Configuration allows switching between providers
+Schema design supporting complex workflows
+Intention and action definitions
+Processing history and analytics
+System configuration and credentials
 
-### Email Processing Workflow
 
-1. **Email Fetching** (`EmailProcessorService.fetchNewEmails`):
-   - Runs every 5 minutes via CRON job
-   - Fetches new emails from all active users' inboxes
-   - Stores emails as unprocessed records
 
-2. **Email Processing** (`EmailProcessorService.processEmails`):
-   - Runs every 30 seconds via CRON job
-   - Processes each unprocessed email:
-     - Detects intention using AI
-     - Matches with admin-defined intentions
-     - Extracts information
-     - Determines pricing
-     - Executes actions
+2. Frontend (Next.js)
 
-### Action Execution
+Admin Interface:
 
-The system supports multiple types of actions:
-- Send Email: Send automated responses
-- API Call: Integrate with external systems
-- Update Record: Modify database records
-- Notification: Send notifications
-- Custom: Execute custom logic
+Intention configuration (keywords, AI parameters)
+Action definition (AI prompts, workflow connections)
+Workflow visualization and testing
 
-Actions support variable substitution using data extracted from emails.
 
-## Getting Started
+Monitoring Dashboard:
 
-### Prerequisites
+Real-time processing statistics
+Channel-specific metrics
+Intention distribution analytics
+Terminal action success rates
 
-- Node.js (v16+)
-- MongoDB
-- Google AI API key (for Gemini)
 
-### Installation
+Development Tools:
 
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd email-intention-detection
-```
+Workflow testing framework
+AI prompt playground
+Log viewer and debug tools
 
-2. Install dependencies
-```bash
-npm install
-```
 
-3. Create a `.env` file in the root directory
-```
-# Server
-PORT=3000
 
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/email-intention-detection
+Data Model
+Core Entities
 
-# AI Configuration
-AI_DEFAULT_PROVIDER=gemini
-AI_GEMINI_API_KEY=your-gemini-api-key
+Message: Normalized representation of a communication from any channel
 
-# Email Fetching
-EMAIL_POLLING_INTERVAL=300
-```
+Source channel metadata
+Content (text, transcribed audio)
+Attachments and structured data
 
-4. Start the application
-```bash
-npm run start:dev
-```
 
-### API Endpoints
+Intention: Semantic categorization pattern
 
-The application provides RESTful APIs for:
-- User management
-- Intention configuration
-- Price management
-- Action configuration
-- Email processing management
+Detection keywords and patterns
+AI configuration (threshold, tokens, temperature)
+Context mapping configuration
+Associated actions
 
-Visit `/api` after starting the application to access the Swagger documentation.
 
-## Implementation Details
+Action: Processing step definition
 
-### Email Authentication
+AI prompt template
+Expected output format
+Result handling (next intention or terminal action)
+Execution configuration
 
-User email credentials are securely stored with encryption:
-- Password encryption/decryption in `UserService`
-- IMAP connection handling in `EmailService`
 
-### AI Integration
+Workflow: Runtime execution of intention-action chains
 
-The AI module provides a unified interface:
-- Common input/output formats across providers
-- Prompt templates for intention detection
-- Structured response parsing
+Execution graph
+Processing state
+Context data
+Execution history
 
-### Scheduled Processing
 
-Email processing is handled by scheduled tasks:
-- `@Cron` decorators for scheduled execution
-- Concurrency control to prevent overlapping jobs
-- Error handling for individual emails
 
-## Example Flow
+Technical Specifications
+Backend
 
-1. Admin creates an intention for "Purchase Request"
-2. Admin defines actions to execute for this intention
-3. User registers with their email credentials
-4. System monitors the user's inbox
-5. When a purchase request email arrives:
-   - AI detects the intention
-   - System extracts product, quantity, etc.
-   - System determines pricing
-   - System executes defined actions (e.g., send confirmation)
+Framework: NestJS (Node.js)
+Database: MongoDB with Mongoose ODM
+AI Integration: REST API clients for provider services
+Messaging: Event-driven architecture with optional message queue
+API: RESTful endpoints with OpenAPI documentation
+Authentication: JWT-based with role permissions
+Testing: Jest for unit/integration tests
 
-## Development
+Frontend
 
-### Project Structure
+Framework: Next.js 14 with App Router
+State Management: React Query for server state, Context API for local state
+UI Components: Custom components with shadcn/ui
+Data Visualization: Recharts for analytics, React Flow for workflow visualization
+API Integration: Axios with query/mutation hooks
+Authentication: NextAuth.js for session management
 
-```
-src/
-├── action/         # Action execution
-├── admin/          # Intention and price management
-├── ai/             # AI provider integration
-│   └── providers/  # Implementation for different AI services
-├── email/          # Email fetching and processing
-├── schemas/        # MongoDB entity definitions
-├── user/           # User management
-└── config/         # Application configuration
-```
+Implementation Details
+AI Processing Pipeline
+Input Message → Preprocessing → Intention Detection → Information Extraction → Action Selection → Action Execution → Terminal Action
+Workflow Execution
 
-### Testing
+Initialization: Create workflow context with message data
+Intention Detection: Identify the primary intention
+Context Preparation: Map extracted data to action context
+Action Execution: Process the action with AI prompt
+Path Selection: Determine next step based on action result
+Terminal Execution: Perform final concrete action
+Response Tracking: Record results and analytics
 
-Run unit tests:
-```bash
-npm test
-```
+Scalability Considerations
 
-Run end-to-end tests:
-```bash
-npm run test:e2e
-```
+Horizontal scaling via containerization (Docker/Kubernetes)
+Background processing for long-running workflows
+Caching for frequent AI prompts and responses
+Rate limiting for external API calls
+Message queue for asynchronous processing
 
-### Future Enhancements
+Developer Integration
+Adding New Channels
 
-- Full implementation of OpenAI and Claude providers
-- Enhanced security with JWT authentication
-- Admin dashboard for monitoring and configuration
-- Support for more email providers and protocols
-- Advanced intention matching algorithms
+Implement the ChannelAdapter interface
+Create normalization functions for channel-specific formats
+Register the adapter in the channel registry
+Configure channel-specific metadata extraction
+
+Creating Terminal Actions
+
+Implement the TerminalAction interface
+Define input schema and validation rules
+Implement execution logic
+Register in the terminal action registry
+
+Extending AI Capabilities
+
+Implement the AIProvider interface
+Configure provider-specific parameters
+Add response parsing for structured outputs
+Register the provider in the AI module
