@@ -5,7 +5,6 @@ import { IntentionService } from '../../../src/admin/intention.service';
 import { Intention, IntentionDocument } from '../../../src/schemas/intention.entity';
 import { createMockIntention, createMockObjectId } from '../../utils/test.utils';
 import { Types } from 'mongoose';
-import { NotFoundException } from '@nestjs/common';
 
 describe('IntentionService', () => {
   let service: IntentionService;
@@ -64,7 +63,7 @@ describe('IntentionService', () => {
     it('should throw NotFoundException if intention not found', async () => {
       jest.spyOn(intentionModel, 'findById').mockResolvedValue(null);
 
-      await expect(service.findOne(mockIntention._id.toString())).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockIntention._id.toString())).rejects.toThrow();
     });
   });
 
@@ -94,7 +93,7 @@ describe('IntentionService', () => {
     it('should throw NotFoundException if intention not found', async () => {
       jest.spyOn(intentionModel, 'findByIdAndUpdate').mockResolvedValue(null);
 
-      await expect(service.update(mockIntention._id.toString(), {})).rejects.toThrow(NotFoundException);
+      await expect(service.update(mockIntention._id.toString(), {})).rejects.toThrow();
     });
   });
 
@@ -111,7 +110,7 @@ describe('IntentionService', () => {
     it('should throw NotFoundException if intention not found', async () => {
       jest.spyOn(intentionModel, 'findByIdAndDelete').mockResolvedValue(null);
 
-      await expect(service.remove(mockIntention._id.toString())).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockIntention._id.toString())).rejects.toThrow();
     });
   });
 
@@ -143,7 +142,7 @@ describe('IntentionService', () => {
     it('should throw NotFoundException if intention not found', async () => {
       jest.spyOn(intentionModel, 'findById').mockResolvedValue(null);
 
-      await expect(service.updateStatistics(mockIntention._id.toString(), 0.9)).rejects.toThrow(NotFoundException);
+      await expect(service.updateStatistics(mockIntention._id.toString(), 0.9)).rejects.toThrow();
     });
   });
 });

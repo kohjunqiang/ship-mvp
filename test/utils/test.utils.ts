@@ -103,10 +103,9 @@ export const createMockProcessedEmail = (overrides: Partial<MockProcessedEmail> 
   ...overrides,
 });
 
-export const createMockIntention = (overrides: Partial<MockIntention> = {}): MockIntention => {
-  const mockId = createMockObjectId();
+export const createMockIntention = (overrides: Partial<MockIntention> = {}): IntentionDocument => {
   const mockIntention: MockIntention = {
-    _id: mockId,
+    _id: createMockObjectId(),
     name: 'Test Intention',
     description: 'Test Description',
     keywords: ['test', 'keyword'],
@@ -124,7 +123,7 @@ export const createMockIntention = (overrides: Partial<MockIntention> = {}): Moc
     ...overrides,
   };
 
-  return mockIntention;
+  return mockIntention as unknown as IntentionDocument;
 };
 
 export const createMockAction = (overrides: Partial<MockAction> = {}): MockAction => ({

@@ -96,9 +96,13 @@ export class CreateActionDto {
   })
   @IsObject()
   @ValidateNested()
-  @Type((options) => {
-    const { object } = options;
-    switch (object?.type) {
+  @Type((options: any) => {
+    if (!options || !options.object) {
+      return Object;
+    }
+    
+    const actionType = options.object.type;
+    switch (actionType) {
       case ActionType.SEND_EMAIL:
         return SendEmailConfig;
       case ActionType.API_CALL:

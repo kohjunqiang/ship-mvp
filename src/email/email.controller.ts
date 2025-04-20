@@ -19,6 +19,7 @@ import {
 import { EmailService } from './email.service';
 import { EmailProcessorService } from './email-processor.service';
 import { ProcessedEmail } from '../schemas/processed-email.entity';
+import { UserService } from '../user/user.service';
 
 @ApiTags('emails')
 @ApiBearerAuth()
@@ -27,6 +28,7 @@ export class EmailController {
   constructor(
     private readonly emailService: EmailService,
     private readonly emailProcessorService: EmailProcessorService,
+    private readonly userService: UserService,
   ) {}
 
   @Get('user/:userId')
@@ -69,8 +71,20 @@ export class EmailController {
     description: 'Email fetching has been triggered',
   })
   async triggerFetch(@Param('userId') userId: string): Promise<void> {
-    const user = await this.emailService.userService.findOne(userId);
-    await this.emailProcessorService.fetchEmailsForUser(user);
+    const emails = await this.emailService.fetchEmails(userId);
+    
+    if (emails && emails.length > 0) {
+      for (const email of emails) {
+        await this.emailService.saveProcessedEmail({
+          user: userId,
+          subject: email.subject,
+          content: email.text,
+          sender: email.from,
+          emailId: email.messageId,
+          isProcessed: false,
+        });
+      }
+    }
   }
 
   @Post('process/:id')
@@ -83,5 +97,11 @@ export class EmailController {
   })
   triggerProcess(@Param('id') id: string): Promise<void> {
     return this.emailProcessorService.manualProcess(id);
+  }
+
+  @Post('fetchForUser/:userId')
+  async fetchEmailsForUser(@Param('userId') userId: string) {
+    const emails = await this.emailService.fetchEmails(userId);
+    return { success: true, count: emails.length };
   }
 }

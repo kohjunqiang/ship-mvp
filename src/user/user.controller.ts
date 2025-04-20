@@ -8,10 +8,6 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  UsePipes,
-  ValidationPipe,
-  BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,12 +20,10 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '../schemas/user.entity';
-import { Types } from 'mongoose';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
-@UsePipes(new ValidationPipe({ transform: true }))
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -41,15 +35,8 @@ export class UserController {
     type: User,
   })
   @ApiResponse({ status: 409, description: 'Email already registered' })
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    try {
-      return await this.userService.create(createUserDto);
-    } catch (error) {
-      if (error.message.includes('Email already registered')) {
-        throw new BadRequestException('Email already registered');
-      }
-      throw error;
-    }
+  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.userService.create(createUserDto);
   }
 
   @Get()
@@ -72,15 +59,8 @@ export class UserController {
     type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findOne(@Param('id') id: string): Promise<User> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid user ID');
-    }
-    const user = await this.userService.findOne(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+  findOne(@Param('id') id: string): Promise<User> {
+    return this.userService.findOne(id);
   }
 
   @Get('email/:email')
@@ -92,12 +72,8 @@ export class UserController {
     type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findByEmail(@Param('email') email: string): Promise<User> {
-    const user = await this.userService.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+  findByEmail(@Param('email') email: string): Promise<User> {
+    return this.userService.findByEmail(email);
   }
 
   @Patch(':id')
@@ -109,18 +85,11 @@ export class UserController {
     type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid user ID');
-    }
-    const user = await this.userService.update(id, updateUserDto);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+    return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
@@ -132,14 +101,7 @@ export class UserController {
     description: 'The user has been successfully deleted.',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async remove(@Param('id') id: string): Promise<User> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid user ID');
-    }
-    const user = await this.userService.remove(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+  remove(@Param('id') id: string): Promise<User> {
+    return this.userService.remove(id);
   }
 }
